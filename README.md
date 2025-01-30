@@ -6,8 +6,9 @@ The MKS_SERVO42 library is designed to control one or more Nema17 stepper motors
 ## Features
 
 - Control Nema17 stepper motors with MKSSERVO42 driver
-- Set motor speed and directionection
+- Set motor speed and direction
 - Control the number of steps to move
+- Supports all serial commands described in [Makerbase's documentation](https://github.com/makerbase-mks/MKS-SERVO42C/wiki/Serial-communication-description)
 
 ## Supported Architectures
 
@@ -16,7 +17,9 @@ The MKS_SERVO42 library is designed to control one or more Nema17 stepper motors
 
 ## Installation
 
-To install this library, download the repository and place it in your Arduino `libraries` folder, or use the Arduino Library Manager to search for `MKS_SERVO42` and install it directionectly.
+To install this library, download the repository and place it in your Arduino `libraries` folder,
+
+Please note that that this repo nhnifong/MKS_SERVO42 differs signifigantly from it's upstream. the one in the arduino library manager is Alireza's
 
 ## Usage
 
@@ -41,7 +44,7 @@ void setup() {
   Serial.begin(115200);
   while (!Serial.available())
     delay(0);
-  Serial1.begin(38400);
+  Serial1.begin(38400); // be sure to intialize this with the correct pins for your hardware.
   stepper.initialize(&Serial1);
   stepper.ping(stepperId);
 }
