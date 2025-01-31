@@ -85,9 +85,9 @@ class MKS_SERVO42 {
   /// @param speed The speed at which the motor should run, up to a maximum of 2000 RPM. negative numbers spin the other direction
   /// @param pulses The number of pulses to move, which translates to the target position.
   /// @return Returns true if the command is successfully sent and the motor starts running, false if there is an error.
-  bool setTargetPosition(byte stepperId, int8_t speed, uint32_t pulses);
+  bool setTargetPosition(byte stepperId, byte direction, uint8_t speed, uint32_t pulses);
 
-  bool runMotorConstantSpeed(byte stepperId, int8_t speed);
+  bool runMotorConstantSpeed(byte stepperId, byte direction, uint8_t speed);
 
   bool setMotorType(byte stepperId, uint8_t motorType);
   bool setWorkMode(byte stepperId, uint8_t workMode);
@@ -124,7 +124,6 @@ class MKS_SERVO42 {
   uint8_t receiveUint8();
   uint16_t receiveUint16();
   uint32_t receiveUint32();
-  bool sendCommandAndCheckStatus(byte stepperId, byte commandId, uint16_t value = 0);
   long recieveEncoderPosition(byte const &stepperId);
   byte calculateChecksum(const byte *message, int length);
 };
