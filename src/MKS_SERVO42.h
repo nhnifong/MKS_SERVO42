@@ -82,7 +82,7 @@ class MKS_SERVO42 {
   /// @brief Sets the target position for the stepper motor by specifying the direction, speed, and number of pulses.
   ///        The speed parameter should not exceed 2000 RPM and the direction should be 0 for one way or 1 for the opposite.
   /// @param stepperId The ID of the stepper motor to which the command will be sent.
-  /// @param speed The speed at which the motor should run, up to a maximum of 2000 RPM. negative numbers spin the other direction
+  /// @param speed The speed at which the motor should run, up to a maximum of 2000 RPM.
   /// @param pulses The number of pulses to move, which translates to the target position.
   /// @return Returns true if the command is successfully sent and the motor starts running, false if there is an error.
   bool setTargetPosition(byte stepperId, byte direction, uint8_t speed, uint32_t pulses);

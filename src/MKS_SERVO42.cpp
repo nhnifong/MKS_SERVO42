@@ -14,8 +14,9 @@ byte MKS_SERVO42::calculateChecksum(const byte *message, int length) {
 }
 
 bool MKS_SERVO42::sendMessage(byte stepperId, byte const &commandId) {
-  // Flush
-  while (port_->read() != -1);
+  while (port_->available() > 0) {
+    port_->read();  // Read and discard available bytes
+  }
   stepperId += 0xe0;  // e0 is the 0th stepper on this uart port
   uint8_t length = 3;
   byte message[length];
@@ -23,6 +24,7 @@ bool MKS_SERVO42::sendMessage(byte stepperId, byte const &commandId) {
   message[1] = commandId;
   message[2] = calculateChecksum(message, length-1);
   int bytes_written = port_->write(message, length);
+  delay(1);
   if (bytes_written != length) {
     Serial.println("Failed to send basic");
     for (size_t i = 0; i < length; i++) {
@@ -36,8 +38,9 @@ bool MKS_SERVO42::sendMessage(byte stepperId, byte const &commandId) {
 }
 
 bool MKS_SERVO42::sendMessageUint8(byte stepperId, byte const &commandId, uint8_t value) {
-  // Flush
-  while (port_->read() != -1);
+  while (port_->available() > 0) {
+    port_->read();  // Read and discard available bytes
+  }
   stepperId += 0xe0;
   uint8_t length = 4;
   byte message[length];
@@ -46,6 +49,7 @@ bool MKS_SERVO42::sendMessageUint8(byte stepperId, byte const &commandId, uint8_
   message[2] = value;
   message[3] = calculateChecksum(message, length-1);
   int bytes_written = port_->write(message, length);
+  delay(1);
   if (bytes_written != length) {
     Serial.println("Failed to send uint8");
     for (size_t i = 0; i < length; i++) {
@@ -59,8 +63,9 @@ bool MKS_SERVO42::sendMessageUint8(byte stepperId, byte const &commandId, uint8_
 }
 
 bool MKS_SERVO42::sendMessageUint16(byte stepperId, byte const &commandId, uint16_t value) {
-  // Flush
-  while (port_->read() != -1);
+  while (port_->available() > 0) {
+    port_->read();  // Read and discard available bytes
+  }
   stepperId += 0xe0;
   uint8_t length = 5;
   byte message[length];
@@ -70,6 +75,7 @@ bool MKS_SERVO42::sendMessageUint16(byte stepperId, byte const &commandId, uint1
   message[3] = value & 0xFF;
   message[4] = calculateChecksum(message, length-1); // E0 A4 0 40 C4
   int bytes_written = port_->write(message, length);
+  delay(1);
   if (bytes_written != length) {
     Serial.print("Failed to send uint16");
     for (size_t i = 0; i < length; i++) {
@@ -97,16 +103,18 @@ uint16_t MKS_SERVO42::receiveUint16() {
   if (port_->readBytes(bytes, messageSize) != messageSize) {
     return 0; // Or some error value
   }
+  // The number starts at the 1st byte, not the zeroth
   return (uint16_t)(bytes[1] << 8) | bytes[2];
 }
 
 uint32_t MKS_SERVO42::receiveUint32() {
-  int messageSize = 2 + sizeof(uint16_t);
+  int messageSize = 2 + sizeof(uint32_t);
   byte bytes[messageSize];
   if (port_->readBytes(bytes, messageSize) != messageSize) {
     return 0; // Or some error value
   }
-  return (uint32_t)bytes[0] << 24 | (uint32_t)bytes[1] << 16 | (uint32_t)bytes[2] << 8 | bytes[3];
+  // The number starts at the 1st byte, not the zeroth
+  return (uint32_t)bytes[1] << 24 | (uint32_t)bytes[2] << 16 | (uint32_t)bytes[3] << 8 | bytes[4];
 }
 
 bool MKS_SERVO42::ping(byte const &stepperId) {
@@ -115,29 +123,6 @@ bool MKS_SERVO42::ping(byte const &stepperId) {
   return sendMessage(stepperId, instruction::STEPPER_PING);
   return receiveUint8() == 1;
 }
-
-// long MKS_SERVO42::getCurrentPosition(byte const &stepperId) {
-//   if (!sendMessage(stepperId, instruction::GET_ENCODER_POS)) {
-//     return -1;
-//   }
-//   return recieveEncoderPosition(stepperId);
-// }
-
-// long MKS_SERVO42::recieveEncoderPosition(byte const &stepperId) {
-//   byte receivedBytes[8] = {0xe0, 0x00, 0x00, 0x00, 0x00, 0x40, 0x20};
-//   size_t bytesRead = port_->readBytes(receivedBytes, 8);
-//   if (bytesRead == 8 && receivedBytes[0] == (stepperId + 0xE0)) {
-//     int32_t carry = (int32_t)receivedBytes[1] << 24 |
-//                     (int32_t)receivedBytes[2] << 16 |
-//                     (int32_t)receivedBytes[3] << 8 | (int32_t)receivedBytes[4];
-//     uint16_t value =
-//         (uint16_t)receivedBytes[5] << 8 | (uint16_t)receivedBytes[6];
-//     return (carry * 0xffff) + value;
-//   } else {
-//     Serial.println("Invalid response from motor controller");
-//     return false;
-//   }
-// }
 
 uint16_t MKS_SERVO42::getEncoderPosition(byte stepperId) {
   if (!sendMessage(stepperId, instruction::GET_ENCODER_POS)) return 0;
@@ -160,7 +145,9 @@ int16_t MKS_SERVO42::getMotorShaftAngleError(byte stepperId) {
 }
 
 bool MKS_SERVO42::runMotorConstantSpeed(byte stepperId, byte direction, uint8_t speed) {
-  while (port_->read() != -1);
+  while (port_->available() > 0) {
+    port_->read();  // Read and discard available bytes
+  }
   stepperId += 0xe0;
   uint8_t length = 4;
   byte message[length];
@@ -169,8 +156,9 @@ bool MKS_SERVO42::runMotorConstantSpeed(byte stepperId, byte direction, uint8_t 
   message[2] = (direction << 7) | (speed & 0x7F);
   message[3] = calculateChecksum(message, length-1);
   int bytes_written = port_->write(message, length);
-  if (bytes_written == length) {
-    Serial.println("Failed to send");
+  delay(1);
+  if (bytes_written != length) {
+    Serial.println("Failed to send.");
     return false;
   }
   return true;
@@ -198,12 +186,13 @@ bool MKS_SERVO42::setTargetPosition(byte stepperId, byte direction, uint8_t spee
   message[5] = (pulses >> 8) & 0xFF;
   message[6] = pulses & 0xFF;
   message[7] = calculateChecksum(message, 7);
+  port_->write(message, sizeof(message));
+  delay(1);
   for (size_t i = 0; i < 7; i++) {
     Serial.print(" ");
     Serial.print(message[i], HEX);
   }
   Serial.println();
-  port_->write(message, sizeof(message));
 
   return receiveUint8() != 0;
 }
